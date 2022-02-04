@@ -1,0 +1,6 @@
+﻿  test1.cpp
+  e:\windows kits\10\include\10.0.17763.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+e:\work\work\car\fpv\pj\test1\test1\test1.cpp(54): warning C4129: “.”: 不可识别的字符转义序列
+e:\work\work\car\fpv\pj\test1\test1\test1.cpp(89): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+e:\work\work\car\fpv\pj\test1\test1\test1.cpp(76): warning C4101: “sys”: 未引用的局部变量
+  test1.vcxproj -> E:\work\work\car\FPV\PJ\test1\Debug\test1.exe
