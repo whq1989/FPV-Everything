@@ -21,10 +21,10 @@ Serial.begin(9600); //设定硬串口波特率
 }
 
 void loop(){
-  moveMotor(90, 1);
-  stopMotor();
-  moveMotor(90, 0);
-  delay(1000);
+  moveMotor(90, 1);//90转速，正向
+  stopMotor();//待机
+  moveMotor(90, 0);//90转速，反向
+  delay(1000);//延时1秒
 
 //------------控制舵机的角度
   if (Serial.available()) { //如果HC-06发来数据  
