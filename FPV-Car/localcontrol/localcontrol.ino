@@ -1,131 +1,92 @@
 #include <Servo.h>
 
 Servo myservo;
-int sta_1_num=0;//前后速度缓存
-String sta_1_sta="q";//前后方向缓存
-int sta_2_num=0;//左右速度缓存
-String sta_2_sta="z";//左右方向缓存
-String readString="";
-String doCar="";
+//int sta_1_num=0;//前后速度缓存
+//String sta_1_sta="q";//前后方向缓存
+//int sta_2_num=0;//左右速度缓存
+//String sta_2_sta="z";//左右方向缓存
+//String readString="";
+//String doCar="";
 int num=0;
 int cw=0;//前进方向定义
 int ccw=1;//后退方向定义
+int q;//前
+int h;//后
+int z;//左
+int y;//右
+int arrayInts[2];//临时存放速度方向数据
+int i;//方向速度数据由2字节组成
 
 int STBY = 10; //standby   停止状态
 int PWMA = 3; //Speed control  速度
 int AIN1 = 9; //Direction  方向
 int AIN2 = 8; //Direction  方向
 
-void setup(){
-pinMode(STBY, OUTPUT);
-pinMode(PWMA, OUTPUT);
-pinMode(AIN1, OUTPUT);
-pinMode(AIN2, OUTPUT);
 
-Serial.begin(9600); //设定硬串口波特率
-Serial.println("BT is ready!");
-Serial.setTimeout(10);
-myservo.attach(11);
-MotorStop();
+void setup(){
+  pinMode(STBY, OUTPUT);
+  pinMode(PWMA, OUTPUT);
+  pinMode(AIN1, OUTPUT);
+  pinMode(AIN2, OUTPUT);
+  
+  Serial.begin(9600); //设定硬串口波特率
+  Serial.println("BT is ready!");
+  Serial.setTimeout(10);
+  myservo.attach(11);
+  MotorStop();
+  i=0;
 }
 
 void loop(){
+  while(Serial.available()>0){
+    num = Serial.read();
+    arrayInts[i]=num;
+    if(i>=1){
+      num=arrayInts[1]*256+arrayInts[0];
+      //组合方向速度数据
+      //0-90是左方向
+      //91-180是右方向
+      //200-400是前方向，其中200属于0速度即停止
+      //600-750是后方向
+      if(num<=90){//数值表示向左偏转N度，例如50表示向左50度
+        if(num!=z){//如果数值变化
+          z=num;
+          num=90-num;
+          myservo.write(num);
+        }
+      }else if(num>90&&num<=180){//数值表示向右偏转N-90度，例如120表示向右30度
+        if(num!=y){//如果数值变化
+          y=num;
+          myservo.write(num);
+        }
+      }else if(num>=200&&num<400){
+        if(num!=q){//如果数值变化
+          q=num;
+          num=num-200;
+          //MotorStop();//防止电机频繁正反转交替，方向变化时强制待机
+          MotorMove(num, cw);//正方向行驶
+        }
+      }else if(num>=600&&num<800){
+        if(num!=h){//如果数值变化
+          h=num;
+          num=num-600;
+          //MotorStop();//防止电机频繁正反转交替，方向变化时强制待机
+          MotorMove(num, ccw);//反方向行驶
+        }
+      }else{
+        MotorStop();
+      }
+      Serial.println(num,DEC);
+      num=0;
+      i=0;
+    }else{
+      i++;
+      delay(2);
+    }
+  }
   //MotorMove(90, 1); 控制电机速度和方向
   //MotorStop(); 电机待机
   //myservo.write(pos); 控制舵机角度
-  while(Serial.available()>0){
-    char doCar = Serial.read();
-    readString += doCar;
-    Serial.println(readString);
-    Serial.println(num);
-    
-    if(readString=="q"){
-      if(readString!=sta_1_sta){//如果方向变化
-        sta_1_num=num;//更新速度数值
-        sta_1_sta=readString; //更新方向状态
-        MotorStop();//防止电机频繁正反转交替，方向变化时强制待机
-        MotorMove(sta_1_num, cw);//正方向行驶
-      }else{
-        if(sta_1_num!=num){//如果速度变化
-          sta_1_num=num;//更新速度数值
-          MotorMove(sta_1_num, cw);//正方向行驶
-        }
-      }
-    }else if(readString=="h"){
-      if(readString!=sta_1_sta){//如果方向变化
-        sta_1_num=num;//更新速度数值
-        sta_1_sta=readString; //更新方向状态
-        MotorStop();//防止电机频繁正反转交替，方向变化时强制待机
-        MotorMove(sta_1_num, ccw);//正方向行驶
-      }else{
-        if(sta_1_num!=num){//如果速度变化
-          sta_1_num=num;//更新速度数值
-          MotorMove(sta_1_num, ccw);//正方向行驶
-        }
-      }
-    }else if(readString=="z"){
-      if(readString!=sta_2_sta){//如果方向变化
-        sta_2_num=num;//更新速度数值
-        num=90-num;//修正舵机角度数值
-        sta_2_sta=readString; //更新方向状态
-        myservo.write(num);//舵机向左(0-90)
-      }else{
-        if(sta_2_num!=num){//如果角度变化
-          sta_2_num=num;//更新速度数值
-          num=90-num;//修正舵机角度数值
-          myservo.write(num);//舵机向左(0-90)
-        }
-      }
-    }else if(readString=="y"){
-      if(readString!=sta_2_sta){//如果方向变化
-        sta_2_num=num;//更新速度数值
-        num=num+90;//修正舵机角度数值
-        sta_2_sta=readString; //更新方向状态
-        myservo.write(num);//舵机向右(90-180)
-      }else{
-        if(sta_2_num!=num){//如果角度变化
-          sta_2_num=num;//更新速度数值
-          num=num+90;//修正舵机角度数值
-          myservo.write(num);//舵机向右(90-180)
-        }
-      }
-    }else if(readString=="t"){
-      MotorStop();
-    }
-    readString="";
-    delay(5);
-  }
-
-//------------控制舵机的角度
-  //if (Serial.available()) { //如果HC-06发来数据  
-    //int k=Serial.parseInt();//获取蓝牙传输的角度值
-    //int k=Serial.read();
-    //Serial.println(k);
-    //if(k!=0){
-     // old=k;
-      //Serial.println(old);  
-     // myservo.write(old);
-   // }
-    
-    //myservo.write(k);
-    //delayMicroseconds(5000);
-    //    if(k!=0&&k!=old){//如果角度值有变化时，开始执行
-    //      Serial.println(k); 
-    //      if(k>old){
-    //       for (pos = old; pos <= k; pos += 1) { // goes from 0 degrees to 180 degrees
-    //         myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    //         delayMicroseconds(100);                       // waits 15ms for the servo to reach the position
-    //       }
-    //       }else{
-    //         for (pos = old; pos >= k; pos -= 1) { // goes from 0 degrees to 180 degrees
-    //           myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    //           delayMicroseconds(100);                       // waits 15ms for the servo to reach the position
-    //         }
-    //       }
-    //      old=k;
-    //    }
-  //}
-  
 }
 
 
