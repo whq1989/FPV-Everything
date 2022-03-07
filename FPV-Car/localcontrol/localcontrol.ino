@@ -38,6 +38,9 @@ void setup(){
 }
 
 void loop(){
+  //MotorMove(90, 1); 控制电机速度和方向
+  //MotorStop(); 电机待机
+  //myservo.write(0); //控制舵机角度
   while(Serial.available()>0){
     num = Serial.read();
     arrayInts[i]=num;
@@ -48,15 +51,16 @@ void loop(){
       //91-180是右方向
       //200-400是前方向，其中200属于0速度即停止
       //600-750是后方向
-      if(num<=90){//数值表示向左偏转N度，例如50表示向左50度
+      if(num<90&&num>0){//数值表示向右偏转N度，例如50表示向右50度
         if(num!=z){//如果数值变化
           z=num;
-          num=90-num;
+          num=90+num;
           myservo.write(num);
         }
-      }else if(num>90&&num<=180){//数值表示向右偏转N-90度，例如120表示向右30度
+      }else if(num>90&&num<=180){//数值表示向左偏转N-90度，例如120表示向右30度
         if(num!=y){//如果数值变化
           y=num;
+          num=180-num;
           myservo.write(num);
         }
       }else if(num>=200&&num<400){
@@ -84,9 +88,7 @@ void loop(){
       delay(2);
     }
   }
-  //MotorMove(90, 1); 控制电机速度和方向
-  //MotorStop(); 电机待机
-  //myservo.write(pos); 控制舵机角度
+  
 }
 
 
